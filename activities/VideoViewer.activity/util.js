@@ -146,8 +146,19 @@ Util.loadDatabase = function(response, error) {
 					if (!found) Util.categories.push({id: category, title: category});
 				}
 			}
-			app.getFilter().setCategories(Util.categories);
-			response(data);
+			       app.getFilter().setCategories(Util.categories);
+			       // Enable/disable filter button based on categories
+			       var filterButton = document.getElementById("filter-button");
+			       if (filterButton) {
+				       if (!Util.categories || Util.categories.length === 0) {
+					       filterButton.disabled = true;
+					       filterButton.classList.add('disabled');
+				       } else {
+					       filterButton.disabled = false;
+					       filterButton.classList.remove('disabled');
+				       }
+			       }
+			       response(data);
 		});
 		ajax.error(error);
 		ajax.go();

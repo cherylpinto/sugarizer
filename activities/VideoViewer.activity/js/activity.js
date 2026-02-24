@@ -15,14 +15,23 @@ define(["sugar-web/activity/activity","sugar-web/env","filterpalette","tutorial"
 		
 		});
 
-		// Create palette
-		var filterButton = document.getElementById("filter-button");
-		filterpalette = new filterpalette.FilterPalette(filterButton, undefined);
-		filterpalette.addEventListener('filter', function() {
-			app.setFilter({category: filterpalette.getFilter()});
-			Util.saveContext();
-			filterpalette.popDown();
-		});
+		       // Create palette
+		       var filterButton = document.getElementById("filter-button");
+		       filterpalette = new filterpalette.FilterPalette(filterButton, undefined);
+		       filterpalette.addEventListener('filter', function() {
+			       app.setFilter({category: filterpalette.getFilter()});
+			       Util.saveContext();
+			       filterpalette.popDown();
+		       });
+
+		       // Disable filter button if no categories available
+		       if (!Util.categories || Util.categories.length === 0) {
+			       filterButton.disabled = true;
+			       filterButton.classList.add('disabled');
+		       } else {
+			       filterButton.disabled = false;
+			       filterButton.classList.remove('disabled');
+		       }
 		document.getElementById("favorite-button").onclick = function(s, e) {
 			var invoker = s.toElement || s.explicitOriginalTarget || s.currentTarget;
 			isFavorite = !isFavorite;

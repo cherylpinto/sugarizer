@@ -1,3 +1,15 @@
+#main-toolbar #filter-button.disabled {
+	filter: grayscale(1) brightness(1.7);
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+#main-toolbar #filter-button.disabled:hover,
+#main-toolbar #filter-button:disabled:hover {
+	filter: grayscale(1) brightness(1.7);
+	opacity: 0.5;
+	cursor: default;
+}
 body {
   height: 100vh;
 }
