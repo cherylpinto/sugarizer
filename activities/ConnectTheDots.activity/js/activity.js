@@ -181,11 +181,37 @@ define([
 			colorPalette.style.width = "175px";
 			colorPaletteObj.setContent([colorPalette]);
 
+			function saveImageToJournal() {
+				var canvas = document.getElementById("dot-canvas");
+				var offscreen = document.createElement("canvas");
+				offscreen.width = canvas.width;
+				offscreen.height = canvas.height;
+				var ctx = offscreen.getContext("2d");
+				ctx.fillStyle = "#FDFDFD";
+				ctx.fillRect(0, 0, offscreen.width, offscreen.height);
+				ctx.drawImage(canvas, 0, 0);
+
+				var inputData = offscreen.toDataURL('image/png', 1);
+
+				var metadata = {
+					mimetype: 'image/png',
+					title: "Connect the Dots Image",
+					activity: "org.olpcfrance.MediaViewerActivity",
+					timestamp: new Date().getTime(),
+					creation_time: new Date().getTime(),
+					file_size: 0
+				};
+
+				datastore.create(metadata, function () {
+					humane.log("Image saved to Journal");
+					console.log("Image saved to Journal successfully.");
+				}, inputData);
+			}
+
 			for (var modeName in modeButtons) {
 				(function (name) {
 					if (name === "number") return; // Handled dynamically below
 						modeButtons[name].addEventListener("click", function () {
-							currentGame.renderer.clearAll();
 							currentGame.setMode(name);
 							setActiveButton(name);
 
@@ -388,35 +414,7 @@ define([
 			});
 
 			// --- Save Image to Journal ---
-			document.getElementById("save-image-button").addEventListener("click", function () {
-				var mimetype = 'image/png';
-				var canvas = document.getElementById("dot-canvas");
-				
-				// Create an offscreen canvas to put a white background
-				var offscreen = document.createElement("canvas");
-				offscreen.width = canvas.width;
-				offscreen.height = canvas.height;
-				var ctx = offscreen.getContext("2d");
-				ctx.fillStyle = "#FDFDFD"; // Match Sugarizer background
-				ctx.fillRect(0, 0, offscreen.width, offscreen.height);
-				ctx.drawImage(canvas, 0, 0);
-
-				var inputData = offscreen.toDataURL(mimetype, 1);
-				
-				var metadata = {
-					mimetype: mimetype,
-					title: "Connect the Dots Image",
-					activity: "org.olpcfrance.MediaViewerActivity",
-					timestamp: new Date().getTime(),
-					creation_time: new Date().getTime(),
-					file_size: 0
-				};
-
-				datastore.create(metadata, function () {
-					humane.log("Image saved to Journal");
-					console.log("Image saved to Journal successfully.");
-				}, inputData);
-			});
+			document.getElementById("save-image-button").addEventListener("click", saveImageToJournal);
 
 			// --- Save to Journal on Stop ---
 			document.getElementById("stop-button").addEventListener("click", function (event) {

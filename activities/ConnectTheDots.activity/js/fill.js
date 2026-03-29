@@ -39,20 +39,31 @@ define([], function () {
 	}
 
 	/**
-	 * Ray-casting point-in-polygon test.
+	 * Winding number point-in-polygon test (nonzero rule).
+	 * Matches HTML5 canvas default fill rule for self-intersecting paths like stars.
 	 */
 	function pointInPolygon(px, py, polygon) {
-		var inside = false;
+		var wn = 0;
 		var n = polygon.length;
-		for (var i = 0, j = n - 1; i < n; j = i++) {
-			var xi = polygon[i].x, yi = polygon[i].y;
-			var xj = polygon[j].x, yj = polygon[j].y;
-			if (((yi > py) !== (yj > py)) &&
-				(px < (xj - xi) * (py - yi) / (yj - yi) + xi)) {
-				inside = !inside;
+		for (var i = 0; i < n; i++) {
+			var p1 = polygon[i];
+			var p2 = polygon[(i + 1) % n];
+			
+			if (p1.y <= py) {
+				if (p2.y > py) {
+					if ((p2.x - p1.x) * (py - p1.y) - (px - p1.x) * (p2.y - p1.y) > 0) {
+						wn++;
+					}
+				}
+			} else {
+				if (p2.y <= py) {
+					if ((p2.x - p1.x) * (py - p1.y) - (px - p1.x) * (p2.y - p1.y) < 0) {
+						wn--;
+					}
+				}
 			}
 		}
-		return inside;
+		return wn !== 0;
 	}
 
 	/**

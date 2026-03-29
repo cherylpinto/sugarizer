@@ -26,21 +26,51 @@ define(["activity/grid", "activity/fill"], function (grid, fill) {
 		this.el.width = parent.clientWidth;
 		this.el.height = parent.clientHeight;
 
-		var spacingX = this.el.width / (this.targetCols + 1);
-		var spacingY = this.el.height / (this.targetRows + 1);
+		var maxCol = this.targetCols;
+		var maxRow = this.targetRows;
+		
+		if (this.lineManager) {
+			var lines = this.lineManager.getAllLines();
+			for (var i = 0; i < lines.length; i++) {
+				if (lines[i].from.col !== undefined) maxCol = Math.max(maxCol, lines[i].from.col + 1);
+				if (lines[i].to.col !== undefined) maxCol = Math.max(maxCol, lines[i].to.col + 1);
+				if (lines[i].from.row !== undefined) maxRow = Math.max(maxRow, lines[i].from.row + 1);
+				if (lines[i].to.row !== undefined) maxRow = Math.max(maxRow, lines[i].to.row + 1);
+			}
+		}
+		
+		if (this.filledPolygons) {
+			for (var p = 0; p < this.filledPolygons.length; p++) {
+				var poly = this.filledPolygons[p];
+				if (poly.vertices) {
+					for (var v = 0; v < poly.vertices.length; v++) {
+						if (poly.vertices[v].col !== undefined) maxCol = Math.max(maxCol, poly.vertices[v].col + 1);
+						if (poly.vertices[v].row !== undefined) maxRow = Math.max(maxRow, poly.vertices[v].row + 1);
+					}
+				}
+			}
+		}
+
+		var spacingX = this.el.width / (maxCol + 1);
+		var spacingY = this.el.height / (maxRow + 1);
 		this.spacing = Math.min(spacingX, spacingY);
 
-		this.grid = grid.createGrid(this.el.width, this.el.height, this.spacing, this.targetCols, this.targetRows);
+		var adaptiveCols = Math.max(maxCol, Math.floor(this.el.width / this.spacing) - 1);
+		var adaptiveRows = Math.max(maxRow, Math.floor(this.el.height / this.spacing) - 1);
+
+		this.grid = grid.createGrid(this.el.width, this.el.height, this.spacing, adaptiveCols, adaptiveRows);
 		this.render();
 	};
 
-	CanvasRenderer.prototype.render = function () {
-		var ctx = this.ctx;
-		ctx.clearRect(0, 0, this.el.width, this.el.height);
-		this._drawFilledPolygons(ctx);
-		this._drawLines(ctx);
-		this._drawDots(ctx);
-	};
+	        CanvasRenderer.prototype.render = function () {
+                var ctx = this.ctx;
+                ctx.clearRect(0, 0, this.el.width, this.el.height);
+                this._drawFilledPolygons(ctx);
+                this._drawLines(ctx);
+                this._drawDots(ctx);
+        };
+
+        
 
 	CanvasRenderer.prototype._drawGridGuide = function (ctx) {
 		if (!this.grid) return;
@@ -95,7 +125,7 @@ define(["activity/grid", "activity/fill"], function (grid, fill) {
 					}
 				}
 				
-				// If it's a boundary vertex or strictly inside the polygon, hide it
+				// Hide dots inside the polygon and boundary dots.
 				if (isBoundary || fill.pointInPolygon(d.x, d.y, dynamicVertices)) {
 					isHidden = true;
 					break;
@@ -116,7 +146,7 @@ define(["activity/grid", "activity/fill"], function (grid, fill) {
 				}
 			}
 
-			// Hidden dots are fully skipped UNLESS they are an active numbered dot
+			// Hidden dots are skipped unless they have an active label (needed for multipart templates)
 			if (isHidden && !dotLabel) continue;
 
 			if (isSel) {
@@ -234,6 +264,7 @@ define(["activity/grid", "activity/fill"], function (grid, fill) {
 		this.lineManager.clear();
 		this.filledPolygons = [];
 		this.selectedDot = null;
+
 		this.render();
 	};
 
@@ -270,10 +301,15 @@ define(["activity/grid", "activity/fill"], function (grid, fill) {
 		return { lines: this.lineManager.toJSON(), filledPolygons: this.filledPolygons };
 	};
 	CanvasRenderer.prototype.fromJSON = function (data) {
-		if (data.lines) this.lineManager.fromJSON(data.lines);
+
+                if (data.lines) this.lineManager.fromJSON(data.lines);
 		if (data.filledPolygons) this.filledPolygons = data.filledPolygons;
 		this.render();
 	};
 
 	return { CanvasRenderer: CanvasRenderer };
 });
+
+
+
+

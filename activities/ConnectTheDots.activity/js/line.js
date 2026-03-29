@@ -82,10 +82,11 @@ define([], function () {
 		for (var k in data) {
 			if (data.hasOwnProperty(k)) {
 				var l = data[k];
-				this.addLine(l.from, l.to, l.color);
-			}
-		}
-	};
+                                this.addLine(l.from, l.to, l.color, true);
 
-	return { LineManager: LineManager };
+                        }
+                }
+        };
+
+        return { LineManager: LineManager };
 });

@@ -34,13 +34,59 @@ define(["activity/fill", "activity/grid", "activity/templates"], function (fill,
 	NumberMode.prototype.activate = function () {
 		this.active = true;
 		this.renderer.numberLabels = this.sequence;
-		this.renderer.render();
+		this.renderer.activeLabelIndex = this.currentIndex;
+                this.renderer.render();
 	};
 
 	NumberMode.prototype.deactivate = function () {
 		this.active = false;
 		this.renderer.numberLabels = [];
-		this.renderer.render();
+		this.renderer.activeLabelIndex = this.currentIndex;
+                this.renderer.render();
+	};
+
+	NumberMode.prototype.getState = function () {
+		return {
+			isAuthoring: this.isAuthoring,
+			parts: this.parts,
+			currentPartIndex: this.currentPartIndex,
+			currentIndex: this.currentIndex,
+			sequence: this.sequence,
+			sequenceOpen: this.sequence ? this.sequence.open : undefined,
+			previousPath: this.previousPath
+		};
+	};
+
+	NumberMode.prototype.setState = function (state) {
+		if (!state) return;
+		this.isAuthoring = state.isAuthoring;
+		this.parts = state.parts || [];
+		this.currentPartIndex = state.currentPartIndex || 0;
+		this.currentIndex = state.currentIndex || 0;
+		this.sequence = state.sequence || [];
+		if (state.hasOwnProperty("sequenceOpen")) {
+			this.sequence.open = state.sequenceOpen;
+		}
+		this.previousPath = state.previousPath || null;
+		
+		if (this.active) {
+			this.renderer.numberLabels = this.sequence;
+			this.renderer.activeLabelIndex = this.currentIndex;
+                this.renderer.render();
+		}
+	};
+
+	NumberMode.prototype.clear = function () {
+		if (this.isAuthoring) {
+			this.sequence = [];
+			this.currentIndex = 0;
+			this.previousPath = null;
+		} else {
+			this.currentPartIndex = 0;
+			this.sequence = this.parts && this.parts.length > 0 ? this.parts[0] : [];
+			this.currentIndex = 0;
+			this.previousPath = null;
+		}
 	};
 
 	NumberMode.prototype.startAuthoring = function () {
@@ -52,7 +98,8 @@ define(["activity/fill", "activity/grid", "activity/templates"], function (fill,
 		this.renderer.numberLabels = this.sequence;
 		
 		document.getElementById("save-authoring").style.display = "block";
-		this.renderer.render();
+		this.renderer.activeLabelIndex = this.currentIndex;
+                this.renderer.render();
 	};
 
 	NumberMode.prototype.finishAuthoring = function () {
@@ -83,7 +130,6 @@ define(["activity/fill", "activity/grid", "activity/templates"], function (fill,
 		
 		this.isAuthoring = false;
 		document.getElementById("save-authoring").style.display = "none";
-		this.renderer.clearAll();
 		return [customPart];
 	};
 
@@ -91,22 +137,38 @@ define(["activity/fill", "activity/grid", "activity/templates"], function (fill,
 		if (!this.renderer.grid) return;
 		this.isAuthoring = false;
 		document.getElementById("save-authoring").style.display = "none";
-		
-		// Clear canvas when loading a new template
 		this.renderer.clearAll();
 
 		var centerRow = Math.floor(this.renderer.grid.rows / 2);
 		var centerCol = Math.floor(this.renderer.grid.cols / 2);
 		
-		this.parts = templates.getTemplate(templateName, centerRow, centerCol);
+		var rawParts = templates.getTemplate(templateName, centerRow, centerCol);
+		var flatSequence = [];
+		var labelIdx = 1;
+		if (rawParts) {
+			for (var i = 0; i < rawParts.length; i++) {
+				for (var j = 0; j < rawParts[i].length; j++) {
+					var rawDot = rawParts[i][j];
+					flatSequence.push({
+						row: rawDot.row,
+						col: rawDot.col,
+						label: (labelIdx++).toString()
+					});
+				}
+			}
+			if (rawParts.length > 0) flatSequence.open = rawParts[rawParts.length - 1].open;
+		}
+
+		this.parts = [flatSequence];
 		this.currentPartIndex = 0;
-		this.sequence = this.parts && this.parts.length > 0 ? this.parts[0] : [];
+		this.sequence = flatSequence;
 		this.currentIndex = 0;
 		this.previousPath = null;
 		
 		if (this.active) {
 			this.renderer.numberLabels = this.sequence;
-			this.renderer.render();
+			this.renderer.activeLabelIndex = this.currentIndex;
+                this.renderer.render();
 		}
 	};
 
@@ -135,7 +197,8 @@ define(["activity/fill", "activity/grid", "activity/templates"], function (fill,
 				label: (this.sequence.length + 1).toString()
 			});
 			
-			this.renderer.render();
+			this.renderer.activeLabelIndex = this.currentIndex;
+                this.renderer.render();
 			return true;
 		}
 
@@ -209,16 +272,17 @@ define(["activity/fill", "activity/grid", "activity/templates"], function (fill,
 					this.renderer.numberLabels = this.sequence;
 					this.renderer.selectedDot = null;
 				} else {
-					// Completed all parts of the template
-					this.renderer.numberLabels = [];
-					this.renderer.selectedDot = null;
-				}
+                                        // Completed all parts of the template
+                                        this.renderer.numberLabels = [];
+                                        this.renderer.selectedDot = null;
+}
 			} else {
 				// Not finished yet, keep chaining
 				this.renderer.selectedDot = dot;
 			}
 			
-			this.renderer.render();
+			this.renderer.activeLabelIndex = this.currentIndex;
+                this.renderer.render();
 			return true;
 		}
 
@@ -227,3 +291,6 @@ define(["activity/fill", "activity/grid", "activity/templates"], function (fill,
 
 	return { NumberMode: NumberMode };
 });
+
+
+
