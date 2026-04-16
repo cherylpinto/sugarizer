@@ -525,6 +525,9 @@ define(["sugar-web/activity/activity","tutorial","l10n","sugar-web/env"], functi
 			];
 
 			function zoom() {
+				// Disabling zoom scaling as it breaks pointer coordinate mapping in PhysicsJS on high-DPI screens.
+				// By not scaling the canvas, pointer interaction remains 1:1 mapped to hitboxes.
+				return;
 				if (window.devicePixelRatio == 1) {
 					return;
 				}
