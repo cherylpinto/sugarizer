@@ -74,7 +74,9 @@ define(["sugar-web/activity/activity","tutorial","l10n","sugar-web/env"], functi
 				window.PIXI = PIXI;
 				// create a renderer
 				renderer = Physics.renderer('pixi', {
-					el: 'viewport'
+					el: 'viewport',
+					resolution: window.devicePixelRatio || 1,
+					autoResize: true
 				});
 
 				// add the renderer
@@ -86,7 +88,6 @@ define(["sugar-web/activity/activity","tutorial","l10n","sugar-web/env"], functi
 					world.render();	
 					if (!init) {
 						init = true;
-						zoom();
 					}
 					if (readyToWatch) {
 						if (window.Accelerometer) {
@@ -523,24 +524,6 @@ define(["sugar-web/activity/activity","tutorial","l10n","sugar-web/env"], functi
 				,['0x58c73c', '0x30641c']
 				,['0xcac34c', '0x736a2c']
 			];
-
-			function zoom() {
-				// Disabling zoom scaling as it breaks pointer coordinate mapping in PhysicsJS on high-DPI screens.
-				// By not scaling the canvas, pointer interaction remains 1:1 mapped to hitboxes.
-				return;
-				if (window.devicePixelRatio == 1) {
-					return;
-				}
-				var canvas = document.getElementById("viewport").children[0];
-				var zoom = 1.0 / window.devicePixelRatio;
-				canvas.style.zoom = zoom;
-				var useragent = navigator.userAgent.toLowerCase();
-				if (useragent.indexOf('chrome') == -1) {
-					canvas.style.MozTransform = "scale("+zoom+")";
-					canvas.style.MozTransformOrigin = "0 0";
-				}
-				world.wakeUpAll();
-			}
 
 			function random( min, max ){
 				return (Math.random() * (max-min) + min)|0;
